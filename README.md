@@ -2,6 +2,7 @@
 
 [![Release](https://github.com/MajoSissi/easytier-docker/actions/workflows/build-release.yml/badge.svg)](https://github.com/MajoSissi/easytier-docker/actions/workflows/build-release.yml)
 [![Pre-release](https://github.com/MajoSissi/easytier-docker/actions/workflows/build-pre.yml/badge.svg)](https://github.com/MajoSissi/easytier-docker/actions/workflows/build-pre.yml)
+[![Pre-release](https://github.com/MajoSissi/easytier-docker/actions/workflows/build-nightly.yml/badge.svg)](https://github.com/MajoSissi/easytier-docker/actions/workflows/build-nightly.yml)
 
 [EasyTier](https://github.com/EasyTier/EasyTier) 发布新版本时，自动构建并发布 Docker 镜像
 

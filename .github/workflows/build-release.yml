@@ -30,8 +30,13 @@ jobs:
         id: get_version
         run: |
           LATEST_VERSION=$(curl -s https://api.github.com/repos/EasyTier/EasyTier/releases/latest | jq -r .tag_name)
+          if [ -z "$LATEST_VERSION" ] || [ "$LATEST_VERSION" = "null" ]; then
+            echo "No release tag found." >&2
+            exit 1
+          fi
           echo "Latest version: $LATEST_VERSION"
           echo "version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          echo "version_number=${LATEST_VERSION#v}" >> $GITHUB_OUTPUT
 
       - name: Check if version changed
         id: check_version
@@ -85,7 +90,7 @@ jobs:
             VERSION=${{ steps.get_version.outputs.version }}
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/easytier:${{ github.event.inputs.custom_docker_tag || 'latest' }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/easytier:${{ steps.get_version.outputs.version }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/easytier:${{ steps.get_version.outputs.version_number }}
 
       - name: Update LAST_VERSION file
         if: steps.check_version.outputs.build == 'true'
