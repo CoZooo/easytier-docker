@@ -31,7 +31,6 @@ jobs:
         run: |
           RELEASE=$(curl -s https://api.github.com/repos/EasyTier/EasyTier/releases/tags/nightly)
           NIGHTLY_TAG=$(echo "$RELEASE" | jq -r '.tag_name')
-          PUBLISHED_AT=$(echo "$RELEASE" | jq -r '.published_at')
           # nightly 的资产文件名内嵌版本号, 例如 easytier-linux-x86_64-v2.7.0.zip
           ASSET=$(echo "$RELEASE" | jq -r '[.assets[].name | select(startswith("easytier-linux-x86_64-"))][0]')
           if [ -z "$ASSET" ] || [ "$ASSET" = "null" ]; then
@@ -40,12 +39,13 @@ jobs:
           fi
           FILE_VERSION="${ASSET#easytier-linux-x86_64-}"
           FILE_VERSION="${FILE_VERSION%.zip}"
+          LATEST_UPLOAD_AT=$(echo "$RELEASE" | jq -r '[.assets[] | select(.name | startswith("easytier-linux-") and endswith(".zip")) | .created_at] | max')
           echo "Nightly tag: $NIGHTLY_TAG"
           echo "Nightly version: $FILE_VERSION"
-          echo "Published at: $PUBLISHED_AT"
+          echo "Latest asset upload at: $LATEST_UPLOAD_AT"
           echo "version_tag=$NIGHTLY_TAG" >> $GITHUB_OUTPUT
           echo "file_version=$FILE_VERSION" >> $GITHUB_OUTPUT
-          echo "published_at=$PUBLISHED_AT" >> $GITHUB_OUTPUT
+          echo "latest_upload_at=$LATEST_UPLOAD_AT" >> $GITHUB_OUTPUT
 
       - name: Check if version changed
         id: check_version
@@ -62,8 +62,8 @@ jobs:
             CURRENT_VERSION=""
           fi
 
-          # nightly 的 tag 固定不变, 用发布时间判断是否有新的构建
-          LATEST_VERSION="${{ steps.get_version.outputs.published_at }}"
+          # nightly 的 tag 固定不变, 用附件最新上传时间判断是否有新的构建
+          LATEST_VERSION="${{ steps.get_version.outputs.latest_upload_at }}"
 
           if [ "$LATEST_VERSION" != "$CURRENT_VERSION" ]; then
             echo "New nightly build detected: $LATEST_VERSION"
@@ -106,8 +106,8 @@ jobs:
         if: steps.check_version.outputs.build == 'true'
         run: |
           mkdir -p .github/state
-          echo "${{ steps.get_version.outputs.published_at }}" > .github/state/LAST_NIGHTLY_VERSION
+          echo "${{ steps.get_version.outputs.latest_upload_at }}" > .github/state/LAST_NIGHTLY_VERSION
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'actions@github.com'
           git add .github/state/LAST_NIGHTLY_VERSION
-          git diff --staged --quiet || (git commit -m "Update LAST_NIGHTLY_VERSION to ${{ steps.get_version.outputs.published_at }}" && git pull --rebase && git push)
+          git diff --staged --quiet || (git commit -m "Update LAST_NIGHTLY_VERSION to ${{ steps.get_version.outputs.latest_upload_at }}" && git pull --rebase && git push)
